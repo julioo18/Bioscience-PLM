@@ -114,5 +114,22 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def resolve_recorded_path(recorded: str, root: Path = Path('.')) -> Path:
+    """Locate a historical artifact without changing its recorded provenance."""
+    root = Path(root)
+    mapping = json.loads((root / 'configs/artifact-paths.json').read_text())
+    path = Path(recorded)
+    if path.is_absolute():
+        try:
+            path = path.relative_to(mapping['recorded_root'])
+        except ValueError:
+            return path
+    for old, new in sorted(mapping['paths'].items(), key=lambda item: len(item[0]), reverse=True):
+        source = Path(old)
+        if path == source or source in path.parents:
+            return root / new / path.relative_to(source)
+    return root / path
+
+
 def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n", encoding="utf-8")

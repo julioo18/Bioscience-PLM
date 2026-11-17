@@ -1,0 +1,29 @@
+{
+  "description": "Physical relocation only; historical artifact bytes and recorded hashes unchanged.",
+  "scientific_commit": "835fc26",
+  "recorded_root": "/home/vince/Documents/Projects/Biosciences/Bioscience-PLM",
+  "paths": {
+    "compute_esm_features.py": "src/tem1/embeddings.py",
+    "tem1_exploration.ipynb": "notebooks/tem1_exploration.ipynb",
+    "tem1_supervised_exploration.ipynb": "notebooks/tem1_supervised_exploration.ipynb",
+    "TEM1.fasta": "data/raw/TEM1.fasta",
+    "proteingym_substitutions.zip": "data/raw/proteingym_substitutions.zip",
+    "stiffler_single_folds.csv": "data/processed/stiffler_single_folds.csv",
+    "esm_wt.npz": "features/esm2_150m/esm_wt.npz",
+    "esm_variant_features.parquet": "features/esm2_150m/esm_variant_features.parquet",
+    "data/tem1": "data/raw/tem1",
+    "results/scale_gpu": "results/zero_shot/esm2",
+    "results/esmc_gpu": "results/zero_shot/esmc",
+    "results/esm2_35m": "results/zero_shot/esm2/cpu_35m",
+    "results/smoke": "results/zero_shot/esm2/smoke_cpu",
+    "results/mutant_embeddings_check": "features/esm2_150m/verification_run",
+    "results/supervised_esm2_150m": "results/supervised/baseline",
+    "results/supervised_esm2_150m_global": "results/supervised/global_extension",
+    "docs/embedding-validation.json": "features/esm2_150m/validation.json",
+    "docs/scaling-summary.json": "results/zero_shot/esm2/scaling-summary.json"
+  },
+  "removed_entry_points": [
+    "experiment_ridge_position.py",
+    "experiment_zeroshot_ridge.py"
+  ]
+}

@@ -7,7 +7,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from tem1.data import ASSAY_ID, parse_mutation, read_assay, read_reference
+from tem1.data import ASSAY_ID, parse_mutation, read_assay, read_reference, resolve_recorded_path
 from tem1.download import download_file, extract_assay, prepare_data, verify_manifest
 
 
@@ -40,6 +40,22 @@ class DataTests(unittest.TestCase):
     def test_first_and_last_positions(self):
         self.assertEqual(parse_mutation("A1C", "ACD").position, 1)
         self.assertEqual(parse_mutation("D3A", "ACD").position, 3)
+
+    def test_historical_paths_resolve_after_relocation(self):
+        (self.root / 'configs').mkdir()
+        (self.root / 'configs/artifact-paths.json').write_text(json.dumps({
+            'recorded_root': '/old/project',
+            'paths': {'results/old': 'results/zero_shot/esm2',
+                      'wt.npz': 'features/esm2_150m/wt.npz'},
+        }))
+        for recorded, expected in [
+            ('results/old/150m/run.json', 'results/zero_shot/esm2/150m/run.json'),
+            ('/old/project/wt.npz', 'features/esm2_150m/wt.npz'),
+            ('features/esm2_150m/wt.npz', 'features/esm2_150m/wt.npz'),
+            ('results/old_extra/run.json', 'results/old_extra/run.json'),
+        ]:
+            with self.subTest(recorded=recorded):
+                self.assertEqual(resolve_recorded_path(recorded, self.root), self.root / expected)
 
     def test_invalid_annotations(self):
         for annotation in ("A0C", "A01C", "A4C", "C1A", "A1A", "A1*", "A1X", "A1C:D3A", "del1", "a1c"):
