@@ -21,12 +21,12 @@ def parser() -> argparse.ArgumentParser:
     commands = root.add_subparsers(dest="command", required=True)
     for name in ("download", "inspect", "run"):
         sub = commands.add_parser(name)
-        sub.add_argument("--data-dir", type=Path, default=Path("data/tem1"))
+        sub.add_argument("--data-dir", type=Path, default=Path("data/raw/tem1"))
         if name == "download":
             sub.add_argument("--archive", type=Path, help="Already downloaded official ZIP")
             sub.add_argument("--reference", type=Path, help="Already downloaded reference CSV")
         if name == "run":
-            sub.add_argument("--output", type=Path, default=Path("results/esm2_35m"))
+            sub.add_argument("--output", type=Path, default=Path("results/zero_shot/esm2/run"))
             sub.add_argument("--model", default="facebook/esm2_t12_35M_UR50D")
             sub.add_argument("--revision", help="HF commit; required when changing the default model")
             sub.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")

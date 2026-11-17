@@ -17,7 +17,7 @@ Pipeline
 
 Run from the repository root:
 
-    python compute_esm_features.py
+    python -m tem1.embeddings
 
 The mutant loop is resumable: variants already present in the parquet file are
 skipped.
@@ -53,11 +53,11 @@ MUTATION = re.compile(r"([ACDEFGHIKLMNPQRSTVWY])([1-9][0-9]*)([ACDEFGHIKLMNPQRST
 
 DEFAULT_CHECKPOINT = "facebook/esm2_t30_150M_UR50D"
 DEFAULT_REVISION = "a695f6045e2e32885fa60af20c13cb35398ce30c"
-DEFAULT_FOLDS = "stiffler_single_folds.csv"
-DEFAULT_ZIP = "proteingym_substitutions.zip"
+DEFAULT_FOLDS = "data/processed/stiffler_single_folds.csv"
+DEFAULT_ZIP = "data/raw/proteingym_substitutions.zip"
 DEFAULT_RAW_MEMBER = "DMS_ProteinGym_substitutions/BLAT_ECOLX_Stiffler_2015.csv"
-DEFAULT_WT_OUT = "esm_wt.npz"
-DEFAULT_VARIANTS_OUT = "esm_variant_features.parquet"
+DEFAULT_WT_OUT = "features/esm2_150m/esm_wt.npz"
+DEFAULT_VARIANTS_OUT = "features/esm2_150m/esm_variant_features.parquet"
 
 WINDOWS = (5, 10, 20)
 FEATURE_COLUMNS = ["emb_mut_pos", "mean_pooled", "mean_local_5", "mean_local_10", "mean_local_20"]

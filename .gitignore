@@ -219,36 +219,51 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Local experiments
+# Environments and local caches
 .venv/
+.venv-esmc/
 .cache/
-data/
-# Keep exploratory runs local; publish the three reference GPU runs.
-/results/*
-!/results/scale_gpu/
-/results/scale_gpu/*
-!/results/scale_gpu/35m/
-!/results/scale_gpu/150m/
-!/results/scale_gpu/650m/
-!/results/scale_gpu/comparison.json
 *.egg-info/
 
-.venv-esmc/
-!/results/esmc_gpu/
-/results/esmc_gpu/*
-!/results/esmc_gpu/600m/
-!/results/esmc_gpu/smoke/
-!/results/esmc_gpu/comparison.json
-!/results/esmc_gpu/verification.json
+# Official inputs and frozen position folds; extracted download cache stays local.
+/data/raw/*
+!/data/raw/TEM1.fasta
+!/data/raw/proteingym_substitutions.zip
+/data/processed/*
+!/data/processed/stiffler_single_folds.csv
 
-# Compact supervised benchmark; predictions and metrics only.
-!/results/supervised_esm2_150m/
-/results/supervised_esm2_150m/*
-!/results/supervised_esm2_150m/predictions.csv
-!/results/supervised_esm2_150m/metrics.json
+# Frozen reference features; fresh extraction runs stay local.
+/features/*
+!/features/esm2_150m/
+/features/esm2_150m/*
+!/features/esm2_150m/esm_wt.npz
+!/features/esm2_150m/esm_variant_features.parquet
+!/features/esm2_150m/validation.json
 
-# Extension with global mean, alongside the original supervised benchmark.
-!/results/supervised_esm2_150m_global/
-/results/supervised_esm2_150m_global/*
-!/results/supervised_esm2_150m_global/predictions.csv
-!/results/supervised_esm2_150m_global/metrics.json
+# Reference benchmark outputs; other runs stay local.
+/results/*
+!/results/zero_shot/
+/results/zero_shot/*
+!/results/zero_shot/esm2/
+/results/zero_shot/esm2/*
+!/results/zero_shot/esm2/35m/
+!/results/zero_shot/esm2/150m/
+!/results/zero_shot/esm2/650m/
+!/results/zero_shot/esm2/comparison.json
+!/results/zero_shot/esm2/scaling-summary.json
+!/results/zero_shot/esmc/
+/results/zero_shot/esmc/*
+!/results/zero_shot/esmc/600m/
+!/results/zero_shot/esmc/smoke/
+!/results/zero_shot/esmc/comparison.json
+!/results/zero_shot/esmc/verification.json
+!/results/supervised/
+/results/supervised/*
+!/results/supervised/baseline/
+/results/supervised/baseline/*
+!/results/supervised/baseline/predictions.csv
+!/results/supervised/baseline/metrics.json
+!/results/supervised/global_extension/
+/results/supervised/global_extension/*
+!/results/supervised/global_extension/predictions.csv
+!/results/supervised/global_extension/metrics.json

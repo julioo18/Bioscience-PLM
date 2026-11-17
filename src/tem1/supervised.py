@@ -30,17 +30,17 @@ ZERO_SHOT = ('zeroshot_wt', 'zeroshot_masked')
 ALPHA_GRID = 10.0 ** np.arange(-2, 6, 0.5)
 CHECKPOINT = 'facebook/esm2_t30_150M_UR50D'
 REVISION = 'a695f6045e2e32885fa60af20c13cb35398ce30c'
-DEFAULT_OUTPUT = Path('results/supervised_esm2_150m')
+DEFAULT_OUTPUT = Path('results/supervised/baseline')
 RAW_MEMBER = f'DMS_ProteinGym_substitutions/{ASSAY_ID}.csv'
 
 
 @dataclass(frozen=True)
 class InputPaths:
-    features: Path = Path('esm_variant_features.parquet')
-    folds: Path = Path('stiffler_single_folds.csv')
-    wt: Path = Path('esm_wt.npz')
-    archive: Path = Path('proteingym_substitutions.zip')
-    masked_dir: Path = Path('results/scale_gpu/150m')
+    features: Path = Path('features/esm2_150m/esm_variant_features.parquet')
+    folds: Path = Path('data/processed/stiffler_single_folds.csv')
+    wt: Path = Path('features/esm2_150m/esm_wt.npz')
+    archive: Path = Path('data/raw/proteingym_substitutions.zip')
+    masked_dir: Path = Path('results/zero_shot/esm2/150m')
 
     def files(self):
         return [self.features, self.folds, self.wt, self.archive,

@@ -3,11 +3,9 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np
 import pandas as pd
-import compute_esm_features as f
+from tem1 import embeddings as f
 
 
 class FeatureTests(unittest.TestCase):
