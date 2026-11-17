@@ -2,7 +2,7 @@
 
 Valutiamo se i modelli proteici **ESM-2 ed ESM-C** prevedono l’ordinamento degli effetti delle mutazioni di TEM-1 usando dati pubblicati. Confrontiamo ESM-2 35M, 150M, 650M ed ESM-C 600M; la **baseline è ESM-2 35M su GPU del 10 novembre 2026**.
 
-**Indice:** [Biologia](#1-biologia-e-domanda-scientifica) · [Dati](#2-dati-e-punteggio-sperimentale) · [Metodo](#3-predizione-zero-shot) · [Risultati](#4-risultati-e-grafici) · [Bootstrap](#5-bootstrap-per-posizione) · [Notebook e sviluppi](#6-notebook-e-futuro-esperimento-supervisionato) · [Preparazione embedding](#preparazione-degli-embedding-mutanti) · [Uso e riproducibilità](#7-installazione-esecuzione-e-riproducibilità)
+**Indice:** [Biologia](#1-biologia-e-domanda-scientifica) · [Dati](#2-dati-e-punteggio-sperimentale) · [Metodo](#3-predizione-zero-shot) · [Risultati](#4-risultati-e-grafici) · [Bootstrap](#5-bootstrap-per-posizione) · [Notebook e supervisione](#6-notebook-ed-esperimento-supervisionato) · [Preparazione embedding](#preparazione-degli-embedding-mutanti) · [Uso e riproducibilità](#7-installazione-esecuzione-e-riproducibilità)
 
 ## 1. Biologia e domanda scientifica
 
@@ -96,13 +96,9 @@ Calcoliamo ρ e la differenza fra modelli in ogni ripetizione. I **percentili 2,
 
 La correlazione sull’intero dataset resta un valore preciso. L’intervallo descrive variabilità interna al saggio rispetto alla composizione delle posizioni: **non** l’errore di ogni variante, le repliche di laboratorio o una garanzia di generalizzazione ad altre proteine.
 
-## 6. Notebook e futuro esperimento supervisionato
+## 6. Notebook ed esperimento supervisionato
 
 [tem1_exploration.ipynb](tem1_exploration.ipynb) conserva l’esplorazione iniziale: estrae **embedding**, rappresentazioni numeriche del WT, con ESM-2 150M, esplora i DMS e prepara cinque fold per posizione. Non contiene un predittore supervisionato delle varianti. Avviarlo dalla radice della repository: i percorsi relativi di FASTA e ZIP restano validi. Il notebook scarica il FASTA e usa CPU; non sostituisce la pipeline riproducibile.
-
-Il futuro esperimento supervisionato, **non ancora implementato**, avrà logica in moduli Python riutilizzabili ed eventualmente un notebook per esplorazione e presentazione. Prima baseline: pLM **congelato**, senza aggiornare i suoi parametri, e regressore semplice addestrato sui DMS. Servono rappresentazioni distinte, per esempio embedding delle sequenze mutate o differenze rispetto al WT: un unico vettore globale WT identico per tutte le varianti non basta.
-
-Training e test saranno separati **per posizione**; gli iperparametri verranno scelti con validazione interna al training, senza usare il test. Confronteremo regressore e zero-shot sulle **stesse posizioni di test**. Generalizzare ad altre proteine richiederà ulteriori saggi e controllo dell’omologia.
 
 ### Preparazione degli embedding mutanti
 
@@ -110,7 +106,7 @@ Preparazione verificata sulla RTX 3090: estrazione completa di 4.996 varianti in
 
 Il branch aggiunge `stiffler_single_folds.csv`, `compute_esm_features.py` e gli artefatti [WT](esm_wt.npz) e [varianti](esm_variant_features.parquet). I **4.996 mutanti** coprono **263 posizioni**, ognuna in un solo fold: i fold 0–4 contengono rispettivamente **53, 53, 53, 52, 52 posizioni**. Le celle finali del notebook generano questa tabella con `GroupKFold`; per confronti futuri riutilizzare il CSV fissato, senza riassegnare i fold.
 
-Lo script applica ESM-2 150M congelato a ogni sequenza mutata e salva cinque vettori da **640 componenti**: residuo mutato, media dell’intera sequenza e medie nelle finestre di raggio 5, 10 e 20 residui, limitate ai bordi. Sono esclusi i token speciali; i vettori sono memorizzati in FP16, mentre il nuovo calcolo usa FP32. Non è ancora addestrato alcun regressore.
+Lo script applica ESM-2 150M congelato a ogni sequenza mutata e salva cinque vettori da **640 componenti**: residuo mutato, media dell’intera sequenza e medie nelle finestre di raggio 5, 10 e 20 residui, limitate ai bordi. Sono esclusi i token speciali; i vettori sono memorizzati in FP16, mentre il nuovo calcolo usa FP32.
 
 La colonna **`zeroshot` usa un unico forward del WT senza masking**: confronta alternativa e originale nei logits del WT visibile al modello. È uno score distinto dalla precedente baseline **masked-marginals**, che nasconde il sito. Il Parquet conserva `mutant`, `position` e `fold`: associare i target DMS tramite un join su **`mutant`** con controllo uno-a-uno, non tramite la posizione delle righe.
 
@@ -127,6 +123,56 @@ uv --no-config pip install --python .venv/bin/python -e . -c requirements-baseli
 ```
 
 I nuovi run fissano la revisione `a695f6045e2e32885fa60af20c13cb35398ce30c` e salvano un manifest `.parquet.run.json`. Ripetendo il comando si riprendono soltanto run con provenienza compatibile. Gli artefatti originari non registrano la revisione: sono validabili, ma non vengono mescolati automaticamente con nuove estrazioni. Lo script controlla annotazioni, target, unicità dei fold, dimensioni e finitezza dei vettori; al termine ripristina l’ordine del CSV dei fold anche dopo una ripresa.
+
+### Benchmark supervisionato su CPU
+
+`src/tem1/supervised.py` condivide caricamento e valutazione fra i due script Ridge originali e il confronto completo. Il pLM è congelato: riutilizziamo gli embedding delle varianti e i due score zero-shot **ESM-2 150M**. Tutti gli input devono contenere le stesse **4.996 varianti**: join uno-a-uno su `mutant`, controllo di target, annotazioni, posizioni e fold, senza scartare righe mancanti o non finite.
+
+Per ogni rappresentazione, **StandardScaler + Ridge** usa i **5 fold esterni per posizione** fissati nel CSV. Solo sul training esterno, **GroupKFold(4)** sceglie alpha minimizzando l’**MSE medio** di validazione sulla griglia originale `10**arange(-2, 6, 0.5)`. Lo scaler è dentro la pipeline e viene stimato su ogni training interno; il modello scelto viene rifittato sul training esterno. Calcolo CPU float64, solver Cholesky, 2 thread. Ogni variante riceve esattamente una predizione fuori training (**OOF**).
+
+Risultati del 17 novembre 2026:
+
+| Metodo | Feature | Spearman: media ± DS fold | Spearman OOF | RMSE OOF | MAE OOF |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Zero-shot WT-marginals | — | 0,6425 ± 0,0410 | 0,6410 | — | — |
+| Zero-shot masked-marginals | — | 0,6634 ± 0,0289 | 0,6605 | — | — |
+| Ridge emb_mut_pos | 640 | 0,7161 ± 0,0254 | 0,7125 | 0,8182 | 0,6590 |
+| Ridge mean_local_5 | 640 | 0,6431 ± 0,0501 | 0,6363 | 0,8943 | 0,7261 |
+| Ridge mean_local_10 | 640 | 0,6383 ± 0,0708 | 0,6356 | 0,9020 | 0,7280 |
+| Ridge mean_local_20 | 640 | 0,6152 ± 0,0859 | 0,6109 | 0,9218 | 0,7508 |
+| Ridge mean_pooled | 640 | 0,6730 ± 0,0484 | 0,6753 | 0,8768 | 0,6988 |
+| Ridge emb_mut_pos + delta | 1280 | 0,7682 ± 0,0219 | 0,7605 | 0,7670 | 0,6129 |
+| Ridge emb_mut_pos + delta + mean_pooled | 1920 | 0,7647 ± 0,0256 | 0,7600 | 0,7682 | 0,6093 |
+
+La **media ± DS** pesa ugualmente i cinque fold e usa deviazione standard campionaria (`ddof=1`); **OOF** ricalcola le metriche sulle 4.996 predizioni aggregate, quindi può differire. Il JSON contiene entrambi i riepiloghi anche per RMSE/MAE. Gli zero-shot sono valutati sulle stesse varianti di test: WT-marginals usa il WT **senza masking**, masked-marginals nasconde il sito; sono preferenze su scale non calibrate alla fitness, perciò riportiamo solo Spearman per questi due metodi.
+
+`emb_mut_pos + delta` concatena 640 componenti del mutante e 640 della differenza rispetto al WT allo stesso sito. La sola rappresentazione aggiunta, `emb_mut_pos_delta_mean_pooled`, concatena anche la media globale della **sequenza mutata**, per un totale di **1.920**. Il confronto mirato ripete il controllo da 1.280 feature e ne riproduce esattamente le precedenti predizioni; input, fold e selezione di alpha restano identici.
+
+La media globale **non migliora Spearman** in questo run: differenza OOF (1.920 − 1.280) **−0,000517**, RMSE **+0,001238**, MAE **−0,003614**. Migliora Spearman in 2 fold su 5; alpha è circa 3.162 in quattro fold e 10.000 nel fold 1. I piccoli cambiamenti sono misti: il MAE diminuisce, ma non emerge un vantaggio complessivo. Il nuovo run CPU richiede circa **109 s**, incluso il controllo da 1.280 feature. Queste differenze descrittive non dimostrano significatività o generalizzazione. Il confronto resta esplorativo su una proteina: la DS non è un intervallo di confidenza, i training esterni si sovrappongono e scegliere una rappresentazione su questi risultati non dà un nuovo test indipendente.
+
+```bash
+# Confronto completo; scegliere un percorso nuovo per una replica.
+.venv/bin/python -m tem1.supervised --threads 2 --output results/supervised_repeat
+# Replica mirata: confronto 1.280 vs 1.920 feature, senza inferenza pLM.
+.venv/bin/python -m tem1.supervised --threads 2 \
+  --representations emb_mut_pos_delta emb_mut_pos_delta_mean_pooled \
+  --output results/supervised_global_repeat
+# I due entry point originali riusano la stessa logica (sottoinsiemi del confronto).
+.venv/bin/python experiment_zeroshot_ridge.py --output results/ridge_pooled_repeat
+.venv/bin/python experiment_ridge_position.py --output results/ridge_delta_repeat
+# Test mirati su identità, separazione delle posizioni e valutazione OOF.
+.venv/bin/python -m unittest discover -s tests -p test_supervised.py -v
+```
+
+Il run completo è in [results/supervised_esm2_150m](results/supervised_esm2_150m/): solo un [CSV OOF](results/supervised_esm2_150m/predictions.csv), identificato da `mutant`, e un [JSON](results/supervised_esm2_150m/metrics.json) con metriche per fold, riepiloghi, alpha scelti, MSE interni, configurazione, versioni e hash. Gli embedding non sono duplicati. Il confronto con la media globale è conservato separatamente in [results/supervised_esm2_150m_global](results/supervised_esm2_150m_global/), anch’esso con un solo CSV e un JSON; tutti gli output precedenti restano disponibili.
+
+[tem1_supervised_exploration.ipynb](tem1_supervised_exploration.ipynb) richiama il modulo comune e presenta dati, protocollo, tabelle e grafici dai risultati salvati, senza rieseguire il training. Il notebook esplorativo precedente resta disponibile.
+
+```bash
+uv --no-config pip install --python .venv/bin/python -e '.[notebooks]' -c requirements-baseline.txt
+# Usare il kernel della .venv; installare jupyter come indicato sotto se necessario.
+jupyter notebook tem1_supervised_exploration.ipynb
+```
 
 ## 7. Installazione, esecuzione e riproducibilità
 

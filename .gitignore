@@ -240,3 +240,15 @@ data/
 !/results/esmc_gpu/smoke/
 !/results/esmc_gpu/comparison.json
 !/results/esmc_gpu/verification.json
+
+# Compact supervised benchmark; predictions and metrics only.
+!/results/supervised_esm2_150m/
+/results/supervised_esm2_150m/*
+!/results/supervised_esm2_150m/predictions.csv
+!/results/supervised_esm2_150m/metrics.json
+
+# Extension with global mean, alongside the original supervised benchmark.
+!/results/supervised_esm2_150m_global/
+/results/supervised_esm2_150m_global/*
+!/results/supervised_esm2_150m_global/predictions.csv
+!/results/supervised_esm2_150m_global/metrics.json

@@ -21,6 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+notebooks = ["nbformat>=5.10,<6", "nbclient>=0.10,<1", "ipykernel>=6,<8"]
 esmc = ["esm==3.2.1", "httpx==0.28.1", "biotite==1.5.0"]
 
 [project.scripts]
